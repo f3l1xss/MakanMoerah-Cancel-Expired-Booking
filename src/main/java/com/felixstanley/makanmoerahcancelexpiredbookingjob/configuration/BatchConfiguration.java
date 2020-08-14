@@ -119,7 +119,7 @@ public class BatchConfiguration {
 
   @Bean
   @StepScope
-  public ItemWriter expireBookingWriter(
+  public ExpireBookingWriter expireBookingWriter(
       @Value("#{stepExecutionContext[" + Constants.USERS_ID_EXECUTION_CONTEXT_KEY_NAME
           + "]}") Integer usersId) {
     return new ExpireBookingWriter(bookingDao, usersDao, usersId);
