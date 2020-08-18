@@ -23,6 +23,7 @@ import org.springframework.batch.core.job.builder.FlowBuilder;
 import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.job.flow.support.SimpleFlow;
 import org.springframework.batch.core.partition.support.Partitioner;
+import org.springframework.batch.core.step.builder.SimpleStepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
@@ -67,7 +68,7 @@ public class BatchConfiguration {
       Step cancelExpiredBooking) {
     return this.stepBuilderFactory.get("cancelExpiredBooking.manager")
         .partitioner(cancelExpiredBooking.getName(), usersIdPartitioner).step(cancelExpiredBooking)
-        .build();
+        .allowStartIfComplete(true).build();
   }
 
   @Bean
@@ -80,18 +81,20 @@ public class BatchConfiguration {
     Flow cancelExpiredBookingFlow = new FlowBuilder<SimpleFlow>("cancelExpiredBookingFlow")
         .start(cancelBooking).next(disableUsers).build();
     return this.stepBuilderFactory.get("cancelExpiredBooking").flow(cancelExpiredBookingFlow)
-        .build();
+        .allowStartIfComplete(true).build();
   }
 
   @Bean
   public Step cancelBooking(ItemReader bookingItemReader, ItemWriter expireBookingWriter) {
-    return this.stepBuilderFactory.get("cancelBooking").chunk(Integer.MAX_VALUE)
-        .reader(bookingItemReader).writer(expireBookingWriter).build();
+    return ((SimpleStepBuilder) this.stepBuilderFactory.get("cancelBooking")
+        .chunk(Integer.MAX_VALUE)
+        .reader(bookingItemReader).writer(expireBookingWriter).allowStartIfComplete(true)).build();
   }
 
   @Bean
   public Step disableUsers(Tasklet disableUsersTasklet) {
-    return this.stepBuilderFactory.get("disableUsers").tasklet(disableUsersTasklet).build();
+    return this.stepBuilderFactory.get("disableUsers").tasklet(disableUsersTasklet)
+        .allowStartIfComplete(true).build();
   }
 
   public RowMapper<Booking> bookingRowMapper() {
