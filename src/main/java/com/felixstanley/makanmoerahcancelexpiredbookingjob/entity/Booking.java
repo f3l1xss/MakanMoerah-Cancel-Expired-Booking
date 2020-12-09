@@ -7,12 +7,14 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
 import lombok.Data;
+import lombok.ToString;
 
 /**
  * @author Felix
  */
 @Entity
 @Data
+@ToString(callSuper = true)
 public class Booking extends AbstractEntity implements Serializable {
 
   @Column(name = "restaurant_id")

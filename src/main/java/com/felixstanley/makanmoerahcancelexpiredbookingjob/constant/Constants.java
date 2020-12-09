@@ -13,7 +13,5 @@ public class Constants {
 
   // Context Key Name
   public final static String USERS_ID_EXECUTION_CONTEXT_KEY_NAME = "usersId";
-  public final static String CURRENT_DATE_EXECUTION_CONTEXT_KEY_NAME = "currentDate";
-  public final static String CURRENT_TIMESLOT_EXECUTION_CONTEXT_KEY_NAME = "currentTimeslot";
 
 }

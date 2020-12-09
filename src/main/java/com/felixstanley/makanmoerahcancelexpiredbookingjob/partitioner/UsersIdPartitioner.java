@@ -1,11 +1,12 @@
 package com.felixstanley.makanmoerahcancelexpiredbookingjob.partitioner;
 
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.constant.Constants;
-import com.felixstanley.makanmoerahcancelexpiredbookingjob.dao.BookingDao;
+import com.felixstanley.makanmoerahcancelexpiredbookingjob.dao.BookingWithCurrentDateTimeslotDao;
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.dao.UsersDao;
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.entity.enums.BookingStatus;
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.utility.Utility;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,35 +24,29 @@ public class UsersIdPartitioner implements Partitioner {
 
   private static final String PARTITION_KEY = "partition";
 
-  private BookingDao bookingDao;
+  private BookingWithCurrentDateTimeslotDao bookingWithCurrentDateTimeslotDao;
   private UsersDao usersDao;
 
   @Override
   public Map<String, ExecutionContext> partition(int gridSize) {
-    Date now = new Date();
-    Short currentTimeslot = Utility.getCurrentTimeslot();
     log.info(
-        "Obtaining UsersId from Expired Bookings at current Date: {} and current Timeslot: {}",
-        now, currentTimeslot);
-    List<Integer> usersIds = bookingDao
-        .findUsersIdExpiredBooking(now, currentTimeslot, BookingStatus.ONGOING);
+        "Obtaining UsersId from Expired Bookings at current UTC Date: {} and current UTC Timeslot: {}",
+        LocalDate.now(ZoneOffset.UTC), Utility.getCurrentTimeslot(ZoneOffset.UTC));
+    List<Integer> usersIds = bookingWithCurrentDateTimeslotDao
+        .findUsersIdExpiredBooking(BookingStatus.ONGOING);
     log.info("Obtained following users Ids: {}", usersIds);
     Map<String, ExecutionContext> map = new HashMap<>(gridSize);
     int i = 0;
     for (Integer id : usersIds) {
-      map.put(PARTITION_KEY + i, getExecutionContext(id, now, currentTimeslot));
+      map.put(PARTITION_KEY + i, getExecutionContext(id));
       i++;
     }
     return map;
   }
 
-  private ExecutionContext getExecutionContext(Integer usersId, Date currentDate,
-      Short currentTimeslot) {
+  private ExecutionContext getExecutionContext(Integer usersId) {
     ExecutionContext executionContext = new ExecutionContext();
     executionContext.put(Constants.USERS_ID_EXECUTION_CONTEXT_KEY_NAME, usersId);
-    executionContext
-        .put(Constants.CURRENT_DATE_EXECUTION_CONTEXT_KEY_NAME, currentDate);
-    executionContext.put(Constants.CURRENT_TIMESLOT_EXECUTION_CONTEXT_KEY_NAME, currentTimeslot);
     return executionContext;
   }
 

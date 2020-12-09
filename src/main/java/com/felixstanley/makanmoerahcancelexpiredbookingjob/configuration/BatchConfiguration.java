@@ -2,6 +2,7 @@ package com.felixstanley.makanmoerahcancelexpiredbookingjob.configuration;
 
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.constant.Constants;
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.dao.BookingDao;
+import com.felixstanley.makanmoerahcancelexpiredbookingjob.dao.BookingWithCurrentDateTimeslotDao;
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.dao.UsersDao;
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.entity.Booking;
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.entity.enums.BookingStatus;
@@ -10,7 +11,6 @@ import com.felixstanley.makanmoerahcancelexpiredbookingjob.partitioner.UsersIdPa
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.rowmapper.BookingRowMapper;
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.tasklet.DisableUsersTasklet;
 import com.felixstanley.makanmoerahcancelexpiredbookingjob.writer.ExpireBookingWriter;
-import java.util.Date;
 import javax.sql.DataSource;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
@@ -55,6 +55,9 @@ public class BatchConfiguration {
   private BookingDao bookingDao;
 
   @Autowired
+  private BookingWithCurrentDateTimeslotDao bookingWithCurrentDateTimeslotDao;
+
+  @Autowired
   private UsersDao usersDao;
 
   @Bean(name = "cancelExpiredBookingJob")
@@ -73,7 +76,7 @@ public class BatchConfiguration {
 
   @Bean
   public Partitioner usersIdPartitioner() {
-    return new UsersIdPartitioner(bookingDao, usersDao);
+    return new UsersIdPartitioner(bookingWithCurrentDateTimeslotDao, usersDao);
   }
 
   @Bean
@@ -105,19 +108,16 @@ public class BatchConfiguration {
   @StepScope
   public JdbcCursorItemReader<Booking> bookingItemReader(@Value(
       "#{stepExecutionContext[" + Constants.USERS_ID_EXECUTION_CONTEXT_KEY_NAME
-          + "]}") Integer usersId,
-      @Value("#{stepExecutionContext[" + Constants.CURRENT_DATE_EXECUTION_CONTEXT_KEY_NAME
-          + "]}") Date currentDate,
-      @Value("#{stepExecutionContext[" + Constants.CURRENT_TIMESLOT_EXECUTION_CONTEXT_KEY_NAME
-          + "]}") Short currentTimeslot) {
+          + "]}") Integer usersId) {
+    // Querying from booking_with_current_date_and_timeslot view
     return new JdbcCursorItemReaderBuilder<Booking>().name("bookingItemReader")
         .dataSource(dataSource).rowMapper(bookingRowMapper())
         .sql("SELECT id, restaurant_id, users_id,"
-            + " confirmed_date, timeslot, booking_code, cancelled_by_system FROM booking WHERE"
-            + " (confirmed_date < ? OR (confirmed_date = ? AND timeslot < ?)) "
-            + "AND booking_status = ? AND users_id = ?")
-        .queryArguments(currentDate, currentDate, currentTimeslot, BookingStatus.ONGOING.ordinal(),
-            usersId).driverSupportsAbsolute(true).build();
+            + " confirmed_date, timeslot, booking_code, cancelled_by_system FROM booking_with_current_date_and_timeslot"
+            + " WHERE (confirmed_date < current_local_date OR (confirmed_date = current_local_date "
+            + "AND timeslot < current_timeslot)) AND booking_status = ? AND users_id = ?")
+        .queryArguments(BookingStatus.ONGOING.ordinal(), usersId).driverSupportsAbsolute(true)
+        .build();
   }
 
   @Bean
