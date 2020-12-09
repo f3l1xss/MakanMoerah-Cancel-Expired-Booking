@@ -4,12 +4,14 @@ import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import lombok.Data;
+import lombok.ToString;
 
 /**
  * @author Felix
  */
 @Entity
 @Data
+@ToString(callSuper = true)
 public class Users extends AbstractEntity implements Serializable {
 
   private String email;

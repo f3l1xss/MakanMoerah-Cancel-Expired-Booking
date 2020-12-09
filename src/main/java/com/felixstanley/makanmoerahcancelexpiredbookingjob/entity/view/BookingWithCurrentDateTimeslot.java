@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import lombok.Data;
+import lombok.ToString;
 
 /**
  * @author Felix Represents 'booking_with_current_date_and_timeslot' view
@@ -16,6 +17,7 @@ import lombok.Data;
 @Entity()
 @Table(name = "booking_with_current_date_and_timeslot")
 @Data
+@ToString(callSuper = true)
 public class BookingWithCurrentDateTimeslot extends AbstractEntity implements Serializable {
 
   @Column(name = "users_id")
