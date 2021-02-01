@@ -34,11 +34,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 /**
  * @author Felix
  */
 @Configuration
+// Needed because of spring.main.web-application-type=none properties
+@EnableRedisHttpSession
 @EnableBatchProcessing
 public class BatchConfiguration {
 
@@ -59,6 +63,9 @@ public class BatchConfiguration {
 
   @Autowired
   private UsersDao usersDao;
+
+  @Autowired
+  private FindByIndexNameSessionRepository findByIndexNameSessionRepository;
 
   @Bean(name = "cancelExpiredBookingJob")
   public Job cancelExpiredBookingJob(Step cancelExpiredBookingManager) {
@@ -133,7 +140,7 @@ public class BatchConfiguration {
   public Tasklet disableUsersTasklet(
       @Value("#{stepExecutionContext[" + Constants.USERS_ID_EXECUTION_CONTEXT_KEY_NAME
           + "]}") Integer usersId) {
-    return new DisableUsersTasklet(usersDao, usersId);
+    return new DisableUsersTasklet(usersDao, usersId, findByIndexNameSessionRepository);
   }
 
   public JobExecutionListener loggingJobListener() {
