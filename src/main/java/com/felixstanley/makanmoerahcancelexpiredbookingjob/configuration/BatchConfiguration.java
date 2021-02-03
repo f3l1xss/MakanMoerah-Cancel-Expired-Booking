@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.data.redis.config.ConfigureRedisAction;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 /**
@@ -66,6 +67,13 @@ public class BatchConfiguration {
 
   @Autowired
   private FindByIndexNameSessionRepository findByIndexNameSessionRepository;
+
+  @Bean
+  public ConfigureRedisAction configureRedisAction() {
+    // Disable Redis Keyspace events for Generic commands and Expired events
+    // Because AWS ElastiCache forbids Config Modification
+    return ConfigureRedisAction.NO_OP;
+  }
 
   @Bean(name = "cancelExpiredBookingJob")
   public Job cancelExpiredBookingJob(Step cancelExpiredBookingManager) {
