@@ -33,11 +33,13 @@ public class DisableUsersTasklet implements Tasklet {
       log.info("Disabling Users {} as he has exceeded Max No Show Count of {}", existingUsers,
           Constants.MAXIMUM_NO_SHOW_COUNT);
       // Delete all his sessions
+      log.info("Deleting All his Sessions...");
       Map<String, Session> sessionMap = findByIndexNameSessionRepository
           .findByPrincipalName(existingUsers.getEmail());
       sessionMap.keySet().stream()
           .forEach(sessionId -> findByIndexNameSessionRepository.deleteById(sessionId));
       // Disable Users
+      log.info("Disabling him...");
       existingUsers.setEnabled(false);
       usersDao.saveAndFlush(existingUsers);
     }
